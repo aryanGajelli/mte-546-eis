@@ -116,8 +116,9 @@ class Keithley2380:
         """
         # self.write_check("TRAC:FEED:CONT NEXT")  # Set to NEXT mode
         # self.write_check("TRAC:CLE")  # Set to NEXT mode
-        data = self.ask_check("TRAC:DATA?")
-        
+        print(self.ask_check("TRAC:FREE?"))  # Number of points in the trace
+        self.write_check("TRAC:DATA?")
+        data = ","
         # data = self.ask_check("TRAC:DATA?", 1000)
         # Convert to list of tuples (voltage, current)
         data = data.decode().strip().split(",")
@@ -127,28 +128,13 @@ class Keithley2380:
 
 if __name__ == "__main__":
     eload = Keithley2380(vid=0x05e6, pid=0x2380)
-    # eload.trace_init()
+    eload.trace_init()
     eload.set_current(1.0)
     eload.load_enable()
-    times = [0]*1000
-    curr = [0]*1000
-    volt = [0]*1000
-    start = time.time()
-    end = time.time()
-    i = 0
-    while end - start < 3:
-        end = time.time()
-        eload.read_voltage()
-        eload.read_current()
-        times[i] = end - start
-        i += 1
-    
-
-    # ic(eload.trace_read())
+    time.sleep(1)
+    eload.trace_read()
     eload.load_disable()
-    # print(len(curr))
     
-    print(times[5] - times[4])
     # plt.figure(figsize=(10, 5))
     # plt.plot(times, curr, label="Current (A)", color='blue')
     # plt.plot(times, volt, label="Voltage (V)", color='red')
