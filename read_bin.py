@@ -3,7 +3,8 @@ import struct
 import sys
 from collections import namedtuple
 import numpy as np
-
+import pandas as pd
+import pathlib as Path
 import matplotlib.pyplot as plt
 TYPE_DIGITAL = 0
 TYPE_ANALOG = 1
@@ -30,7 +31,6 @@ def parse_analog(f):
     samples.fromfile(f, num_samples)
 
     return AnalogData(begin_time, sample_rate, downsample, num_samples, samples)
-
 
 if __name__ == '__main__':
     filename = sys.argv[1]
