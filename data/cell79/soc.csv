@@ -1,0 +1,17 @@
+Estimated SOC	Ah consumed with discharge	Ah consumed by EIS	OCV		
+100%	0	0.0141	4.1392		
+90%	0.2809	0.0141	4.0736		
+80%	0.281	0.0141	3.9923		
+70%	0.281	0.0141	3.8803		
+60%	0.281	0.0141	3.8002		
+50%	0.281	0.0141	3.7101		
+40%	0.281	0.0141	3.6411		0.2809
+30%	0.281	0.0141	3.5309		"Analog Channel 4, 0V Offset = -19mV (Voltage Channel)"
+20%	0.281	0.0141	3.4295		"Analog Channel 6, 0V Offset = -15mV (Voltage Channel)"
+10%	0.281	0.0141	3.1806		"Analog Channel 5, 0V Offset = 37mV (Voltage Channel)"
+0%	0.221	0.0141	2.8403		0.27
+					0.2409
+					
+					0.175
+					0.0599
+					0.221

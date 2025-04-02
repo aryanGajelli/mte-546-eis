@@ -1,14 +1,29 @@
 from scipy.optimize import minimize, Bounds
 import matplotlib.pyplot as plt
 import numpy as np
+import sympy as sp
+from sympy.physics.mechanics import dynamicsymbols, init_vprinting
+from sympy.physics.vector.printing import vpprint, vlatex
+from sympy import lambdify
 import tqdm
-f01_1 = np.logspace(np.log10(0.1), np.log10(1), num=10)
-f1_10 = np.logspace(np.log10(1), np.log10(10), num=10)
-f10_100 = np.logspace(np.log10(10), np.log10(100), num=10)
-f100_1000 = np.logspace(np.log10(100), np.log10(1000), num=10)
-# f10_100 = np.arange(10, 101, 10)
-f = f100_1000
-t = np.arange(0, 1, 0.0001)
+# sp.init_printing()
+init_vprinting()
+def printS(expr, label = None, **kwargs):
+    if label:
+        print(label)
+    print(vpprint(expr, wrap_line=False, **kwargs))
+    print()
+
+
+f01_1 = np.geomspace(0.1, 1, 10)
+f1_10 = np.geomspace(1, 10, 10)
+f10_100 = np.geomspace(10, 100, 10)
+f100_1000 = np.geomspace(100, 1000, 10)
+
+print(np.sum(np.round(3/f1_10,1))+0.01*30 + 0.1*10+0.1*10)
+exit()
+f = f01_1
+t = np.arange(0, 30, 0.01)
 # best_M = float('inf')
 # for i in tqdm.trange(500000, colour='green'):
 #     phi = np.random.uniform(0, 2*np.pi, 10)
@@ -17,32 +32,67 @@ t = np.arange(0, 1, 0.0001)
 #     if M < best_M:
 #         best_M = M
 #         best_phi = phi
-#         print(i, best_M, best_phi.tolist())
+#         print(i, best_M, best_phi.tolist()
+t = sp.symbols('t')
+def sp_s(amp_phase):
+    # sympy version of s
+    amp = amp_phase[0:10]
+    phase_shifts = amp_phase[10:]
+    
+    s = sp.Add(*[amp[i] * sp.sin(2 * np.pi * f[i] * t + phase_shifts[i]) for i in range(10)])
+    return s
 
-def s(amp_phase):
+amp_phase = sp.symbols('a0:10 b0:10')
+s = sp_s(amp_phase)
+ds = sp.diff(s, t)
+dds = sp.diff(s, t, 2)
+
+ks = dds/(sp.sqrt(1+ds**2)**3)
+g_func = lambdify(amp_phase, ks, modules='numpy')
+
+# printS(s, 's')
+# printS(ds, 'ds')
+# printS(dds, 'dds')
+printS(ks, 'ks')
+
+exit()
+
+def get_s(amp_phase):
     # Extract the amplitude and phase shifts from the input array
     amp = amp_phase[0:10]
     phase_shifts = amp_phase[10:]
     # Generate the signal using the given phase shifts
     s = np.sum(amp[:, None]*np.sin(2 * np.pi * f[:, None] * t + phase_shifts[:, None]), axis=0)
-    # Return the maximum absolute value of the signal
-    return np.max(np.abs(s))
+    return s
+
+
+
+def max_s(amp_phase):
+    return np.max(np.abs(get_s(amp_phase)))
+
+def s(amp_phase):
+    # Extract the amplitude and phase shifts from the input array
+    return np.max(np.abs(np.gradient(np.gradient(get_s(amp_phase)))))
+
 constraints = [
-    {'type': 'ineq', 'fun': lambda x: s(x) - 0.2},
-    {'type': 'ineq', 'fun': lambda x: -s(x) + 0.3}
+    {'type': 'ineq', 'fun': lambda x: max_s(x) - 0.3},
+    {'type': 'ineq', 'fun': lambda x: -max_s(x) + 0.3}
 ]
-bounds = Bounds(lb=[0.07]*10+[0]*10, ub=[1]*10 +[2*np.pi]*10)
-opt_result = minimize(s, np.zeros(20), method='SLSQP', bounds=bounds,constraints=constraints, options={'maxiter': 5000000, 'disp': True})
+bounds = Bounds(lb=[0.1]*10+[0]*10, ub=[0.3]*10 +[2*np.pi]*10)
+opt_result = minimize(s, np.ones(20), method='COBYLA', bounds=bounds, constraints=constraints, options={'maxiter': 50000, 'disp': True})
 print("Amplitudes:", opt_result.x[:10].tolist())
 print("Phase shifts:", opt_result.x[10:].tolist())
-print("Minimum max amplitude:", opt_result.fun)
+print("Minimum max amplitude:", max_s(opt_result.x))
 # exit()
 # Plot the signal with the optimal phase shifts
 
 amp = opt_result.x[0:10]
 phase_shifts = opt_result.x[10:]
-y = 1+np.sum(amp[:, None]*np.sin(2 * np.pi * f[:, None] * t + phase_shifts[:, None]), axis=0)
+y = 1+get_s(opt_result.x)
 plt.figure(figsize=(10, 6))
+plt.axhline(y=1, color='orange', linestyle='-')
+plt.axhline(y=1.3, color='g', linestyle='--')
+plt.axhline(y=0.7, color='g', linestyle='--')
 plt.plot(t, y)
 plt.title("Signal with Optimal Phase Shifts")
 plt.xlabel("Time (s)")
