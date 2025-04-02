@@ -26,6 +26,8 @@ def get_v_offset(data_in_amperage, time, discharge_current):
         else:
             if start_t is not None:
                 if t - start_t > 0.98:
+                    # print(f"Start time: {start_t}, End time: {t}, Duration: {t - start_t:.2f} seconds")
+                    # print(np.mean(offset_values))
                     return -(discharge_current - np.mean(offset_values))
                 start_t = None
                 current_val = None
