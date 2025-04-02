@@ -20,26 +20,24 @@ phase_shifts = generate_random_phase_shifts(10)
 for i, shift in enumerate(phase_shifts):
     print(f"Shift {i+1}: {shift:.2f} radians")
 
-freq_log_spacing = generate_freq_log_spacing(0.100, 0.9, 10)
-print("\nLogarithmically spaced frequencies:")
-for i, freq in enumerate(freq_log_spacing):
-    print(f"Frequency {i+1}: {freq:.2f} Hz")
+freq_log_spacing = generate_freq_log_spacing(0.100, 1, 10)
+print("\nLogarithmically spaced frequencies 0.1-1 Hz:")
+print(freq_log_spacing.tolist())
 
 #log spacing from 1Hz to 1000Hz while excluding 1Hz
-freq_log_spacing = generate_freq_log_spacing(1, 9, 10)
-print("\nLogarithmically spaced frequencies (excluding 1Hz):")
-for i, freq in enumerate(freq_log_spacing):
-    print(f"Frequency {i+1}: {freq:.2f} Hz")
+freq_log_spacing = generate_freq_log_spacing(1, 10, 10)
+print("\nLogarithmically spaced frequencies 1-10 Hz:")
+print(freq_log_spacing.tolist())
+# for i, freq in enumerate(freq_log_spacing):
+#     print(f"Frequency {i+1}: {freq:.2f} Hz")
 
-freq_log_spacing = generate_freq_log_spacing(10, 99, 10)
-print("\nLogarithmically spaced frequencies (excluding 1Hz):")
-for i, freq in enumerate(freq_log_spacing):
-    print(f"Frequency {i+1}: {freq:.2f} Hz")
+freq_log_spacing = generate_freq_log_spacing(10, 100, 10)
+print("\nLogarithmically spaced frequencies 10-100 Hz:")
+print(freq_log_spacing.tolist())
 
 freq_log_spacing = generate_freq_log_spacing(100, 1000, 10)
-print("\nLogarithmically spaced frequencies (excluding 1Hz):")
-for i, freq in enumerate(freq_log_spacing):
-    print(f"Frequency {i+1}: {freq:.2f} Hz")
+print("\nLogarithmically spaced frequencies 100-1000 Hz:")
+print(freq_log_spacing.tolist())
 
 # shifts = [0.38, 0.67, 1.86, 4.71, 0.77, 5.42, 1.38, 0.24, 1.69, 5.36]
 # log_freqs = [0.1, 0.13, 0.16, 0.21, 0.27, 0.34, 0.43, 0.55, 0.71, 0.9]
