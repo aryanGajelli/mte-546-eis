@@ -15,6 +15,11 @@ sys.path.append('../')
 FREQ_MULTI_SINE = np.geomspace(0.1, 1, 5)
 PHI = np.array([1.354738, 4.254050, 2.726734, 4.975810, 1.100473])
 AMP = np.array([0.106223, 0.103442, 0.104527, 0.113251, 0.105519])
+F1_10 = np.geomspace(1, 10, 10)
+F10_100 = np.geomspace(10, 100, 10)
+F100_1000 = np.geomspace(100, 1000, 10)
+FREQUENCY_SWEEP_F1_1000 = np.concatenate((F1_10, F10_100, F100_1000))
+
 
 
 def lpf(data, sample_rate, cuttoff_freq, fc=None, btype='lowpass'):
@@ -183,8 +188,35 @@ def break_hf(data):
     plt.legend()
     plt.show()
 
+def increasing_sine_segments(data):
+    # Define wait durations
+    initial_wait_duration = 1  # seconds
+    mid_wait_duration = 0.1  # seconds
 
-df, fs = load_data(cell=79, temp='45C', soc=0)
+    durations = []
+    cumulative_offset = initial_wait_duration + data.index[0]
+    for i in range(len(FREQUENCY_SWEEP_F1_1000)):
+        durations.append([cumulative_offset, cumulative_offset + 4/FREQUENCY_SWEEP_F1_1000[i]])
+        if i < 25:
+            cumulative_offset += 4/FREQUENCY_SWEEP_F1_1000[i] + mid_wait_duration
+        elif i == 29:
+            durations.append([cumulative_offset-0.0003, cumulative_offset + 4/FREQUENCY_SWEEP_F1_1000[i]+0.0003])
+        else: 
+            cumulative_offset += 4/FREQUENCY_SWEEP_F1_1000[i] + mid_wait_duration - 0.0002
+
+    
+    segments = []
+    # access hf_v based on each set of durations
+    for start, end in durations:
+        # if end > hf_i.index[-1]:
+        #     break
+        segment = data[(data.index >= start) & (data.index <= end)]
+        segments.append(segment)
+        # print(start, end)
+
+    return segments
+
+df, fs = load_data(cell=79, temp='45C', soc=90)
 t = df.index
 start_time = 9.32688 + 0.6
 end_time = 39.3194
@@ -199,8 +231,20 @@ lf_v, hf_v = break_data(df, volt=True)
 # plt.plot(hf_v)
 # plt.show()
 # break_hf(hf_v)
-# lf_i, hf_i = break_data(df, volt=False)
+lf_i, hf_i = break_data(df, volt=False)
 
+plt.plot(hf_i.index, hf_i.values, label='hf_i')
+plt.show()
+
+segments = increasing_sine_segments(hf_i)
+
+for segment in segments:
+    plt.plot(segment.index, segment.values)
+plt.xlabel("Time (s)")
+plt.ylabel("Current (A)")
+plt.title("Segments of hf_i")
+plt.grid()
+plt.show()
 
 exit()
 # get the time of the first peak in the gradient
