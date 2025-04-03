@@ -137,16 +137,34 @@ a_trend = lpf(extracted_current, fs, 0.04)
 ac_voltage = extracted_voltage - v_trend
 ac_current = extracted_current - a_trend
 
-v = compute_sine_wave_parameters(ac_voltage, t, v_trend)
-i = compute_sine_wave_parameters(ac_current, t, a_trend)
-plt.plot(t, i)
-plt.plot(t, v)
-plt.xlabel('Time (s)')
+N_required = int(fs/0.001)
+N_original = len(ac_current)
+if N_original < N_required:
+    pad_length = N_required - N_original
+    ac_current_padded = np.pad(ac_current.values, (0, pad_length), mode='constant', constant_values=0)
+    dt = 1/fs
+    t_padded = np.arange(N_required) * dt + t.min()
+
+
+fft_current = fft(ac_current_padded)[:N_required//2]
+freqs = fftfreq(N_required, 1/fs)[:N_required//2]
+# for freq in freqs:
+#     print(freq)
+
+plt.plot(freqs, np.abs(fft_current))
+plt.xlim(xmin=0, xmax=1.4)
+plt.grid()
+plt.show()
+# v = compute_sine_wave_parameters(ac_voltage, t, v_trend)
+# i = compute_sine_wave_parameters(ac_current, t, a_trend)
+# plt.plot(t, i)
+# plt.plot(t, v)
+# plt.xlabel('Time (s)')
 # plt.ylabel('Voltage (V)')
 # plt.title('Voltage over Time')
-plt.grid()
+# plt.grid()
 # plt.legend()
-plt.show()
+# plt.show()
 
 # t = 9.3265 start
 # t = 39.3239 end
