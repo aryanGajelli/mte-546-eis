@@ -2,6 +2,7 @@ import read_bin as rb
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy import signal
 import sys 
 from pathlib import Path
 sys.path.append('../')
@@ -35,6 +36,13 @@ def get_v_offset(data_in_amperage, time, discharge_current):
                 offset_values = []
     return 0
 
+def lpf(data, sample_rate):
+    order = 2 
+    fc = 1000/(sample_rate/2)
+    b, a = signal.butter(order, fc, btype='low', analog=False)
+    filtered_data = signal.filtfilt(b, a, data)
+    return filtered_data
+
 def load_data(soc: SOC_RANGES, cell_number: int, discharge_current: float):
     # load three sets of data from the analog bin files and store in single dataframe
     data_dir_i = Path(f'data/cell{cell_number}/{soc}/analog_5.bin')
@@ -56,9 +64,9 @@ def load_data(soc: SOC_RANGES, cell_number: int, discharge_current: float):
     data_voltage = np.array(data[2].samples) + VOLTAGE_CHANNEL_OFFSET
     
     df = pd.DataFrame({
-        'Current': data_amperage,
-        'Temperature': data_temperature,
-        'Voltage': data_voltage
+        'Current': lpf(data_amperage, sample_rate=data[0].sample_rate),
+        'Temperature': lpf(data_temperature, sample_rate=data[1].sample_rate),
+        'Voltage': lpf(data_voltage, sample_rate=data[2].sample_rate)
     }, index=time)
     return df
 
