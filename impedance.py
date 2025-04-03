@@ -115,12 +115,11 @@ def compute_sine_wave_parameters(data, t, trend):
     return popt
 
 
-
 def break_data(df, volt=True):
     """
     volt = False implies current data
     """
-    V_PEAK_THRESHOLD = 0.004
+    V_PEAK_THRESHOLD = 0.01
     I_PEAK_THRESHOLD = 0.1
     threshold = V_PEAK_THRESHOLD if volt else I_PEAK_THRESHOLD
 
@@ -137,18 +136,50 @@ def break_data(df, volt=True):
             if count == 1:
                 lf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
             if count == 3:
-                hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
+                hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1])]
             count += 1
-   
+
     assert lf is not None
     assert hf is not None
 
-
     return lf, hf
 
+
+def break_hf(data):
+    INIT_OFFSET = 1
+    MIDDLE_OFFSET = 0.1
+    t = data.index
+    t0 = t[0]
+
+    freq = np.geomspace(1, 10, 10)
+    g = lpf(data, 1/(t[1]-t[0]), 10)
+    
     
 
-df, fs = load_data(cell=79, temp='45C', soc=80)
+    # splits = np.split(data, indexes)
+    # for split in splits:
+    #     # if 100 < split.size < 1000:
+    #         print(split)
+    #         # plt.plot(split)
+    #         # if count == 1:
+    #         #     lf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
+    #         # if count == 3:
+    #         #     hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
+    #         # count += 1
+    plt.plot(t, data)
+    plt.plot(t, g, label = 'g')
+    start = INIT_OFFSET
+    for f in freq:
+        end = start + 4/f
+        print(start, end)
+        plt.plot(data[(t - t0 >= start) & (t - t0 <= end)], label=f'{f:.3f}')
+        start = end + MIDDLE_OFFSET
+    
+    plt.legend()
+    plt.show()
+
+
+df, fs = load_data(cell=79, temp='45C', soc=0)
 t = df.index
 start_time = 9.32688 + 0.6
 end_time = 39.3194
@@ -157,24 +188,19 @@ end_time = 39.3194
 # gradient_mask = np.abs(gradient) > 40000
 
 lf_v, hf_v = break_data(df, volt=True)
-lf_i, hf_i = break_data(df, volt=False)
 
-plt.plot(lf_v)
-plt.plot(hf_v)
-plt.plot(lf_i)
-plt.plot(hf_i)
-plt.grid()
-plt.show()
+break_hf(hf_v)
+# lf_i, hf_i = break_data(df, volt=False)
+
 
 exit()
 # get the time of the first peak in the gradient
 first_peak_time = df.index[gradient_mask][0]
-start_time = first_peak_time 
+start_time = first_peak_time
 end_time = start_time + 29.8
 
 print("Start time:", start_time)
 print("End time:", end_time)
-
 
 
 extracted_voltage = df['V'][(df.index >= start_time) & (df.index <= end_time)]
@@ -199,7 +225,7 @@ i_params = compute_sine_wave_parameters(ac_current, t, a_trend)
 print(f"Voltage params: {v_params}")
 print(f"Current params: {i_params}")
 
-#remove last item from v_params and i_params
+# remove last item from v_params and i_params
 v_offset = v_params[-1]
 i_offset = i_params[-1]
 v_params = v_params[:-1]
@@ -214,5 +240,3 @@ for i, (v_param, i_param) in enumerate(zip(v_params, i_params)):
     impedance = (v_freq / -i_freq)
     impedance = impedance.conjugate()
     print(f"Impedance at {FREQ_MULTI_SINE[i]} Hz: {impedance:.6f}")
-
-
