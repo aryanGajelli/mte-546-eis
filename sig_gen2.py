@@ -32,7 +32,7 @@ out = f"{dc_offset:0.4f}+("
 freq = np.geomspace(0.1, 1, 5)
 amp = [0.106223, 0.103442, 0.104527, 0.113251, 0.105519]
 phi = [1.354738, 4.254050, 2.726734, 4.975810, 1.100473]
-
+print(freq)
 # cutout first 5 frequencies
 # freq = freq[5:]
 for i, (a, p, freq) in enumerate(zip(amp, phi, freq)):
