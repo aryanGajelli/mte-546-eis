@@ -17,10 +17,11 @@ PHI = np.array([1.354738, 4.254050, 2.726734, 4.975810, 1.100473])
 AMP = np.array([0.106223, 0.103442, 0.104527, 0.113251, 0.105519])
 
 
-def lpf(data, sample_rate, cuttoff_freq):
+def lpf(data, sample_rate, cuttoff_freq, fc=None, btype='lowpass'):
     order = 2
-    fc = cuttoff_freq/(sample_rate/2)  # normalized
-    b, a = signal.butter(order, fc, btype='low', analog=False)
+    if fc == None:
+        fc = cuttoff_freq/(sample_rate/2)  # normalized
+    b, a = signal.butter(order, fc, btype='lowpass', analog=False)
     filtered_data = signal.filtfilt(b, a, data)
     return filtered_data
 
@@ -141,8 +142,13 @@ def break_data(df, volt=True):
 
     assert lf is not None
     assert hf is not None
+    
+    lt = lf.index
+    ht = hf.index
 
-    return lf, hf
+
+
+    return lt, lpf(lf, 1/(lt[1]-lt[0]), 10), ht, lpf(hf, 1/(ht[1]-ht[0]), 10000),
 
 
 def break_hf(data):
@@ -152,7 +158,8 @@ def break_hf(data):
     t0 = t[0]
 
     freq = np.geomspace(1, 10, 10)
-    g = lpf(data, 1/(t[1]-t[0]), 10)
+    # l = lpf(data, 1/(t[1]-t[0]), 10)
+    g = np.gradient(data)
     
     
 
@@ -167,13 +174,14 @@ def break_hf(data):
     #         #     hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
     #         # count += 1
     plt.plot(t, data)
+    plt.plot(t, l, label = 'l')
     plt.plot(t, g, label = 'g')
-    start = INIT_OFFSET
-    for f in freq:
-        end = start + 4/f
-        print(start, end)
-        plt.plot(data[(t - t0 >= start) & (t - t0 <= end)], label=f'{f:.3f}')
-        start = end + MIDDLE_OFFSET
+    # start = INIT_OFFSET
+    # for f in freq:
+    #     end = start + 4/f
+    #     print(start, end)
+    #     plt.plot(data[(t - t0 >= start) & (t - t0 <= end)], label=f'{f:.3f}')
+    #     start = end + MIDDLE_OFFSET
     
     plt.legend()
     plt.show()
@@ -187,9 +195,13 @@ end_time = 39.3194
 
 # gradient_mask = np.abs(gradient) > 40000
 
-lf_v, hf_v = break_data(df, volt=True)
+lt, lf_v, ht, hf_v = break_data(df, volt=True)
 
-break_hf(hf_v)
+plt.plot(t, df['V'])
+plt.plot(lt, lf_v)
+plt.plot(ht, hf_v)
+plt.show()
+# break_hf(lf_v)
 # lf_i, hf_i = break_data(df, volt=False)
 
 
