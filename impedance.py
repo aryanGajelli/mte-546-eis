@@ -146,9 +146,7 @@ def break_data(df, volt=True):
     lt = lf.index
     ht = hf.index
 
-
-
-    return lt, lpf(lf, 1/(lt[1]-lt[0]), 10), ht, lpf(hf, 1/(ht[1]-ht[0]), 4000),
+    return pd.Series(lpf(lf, 1/(lt[1]-lt[0]), 10), lt), pd.Series(lpf(hf, 1/(ht[1]-ht[0]), 4000), ht)
 
 
 def break_hf(data):
@@ -174,7 +172,6 @@ def break_hf(data):
     #         #     hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
     #         # count += 1
     plt.plot(t, data)
-    plt.plot(t, l, label = 'l')
     plt.plot(t, g, label = 'g')
     # start = INIT_OFFSET
     # for f in freq:
@@ -195,13 +192,13 @@ end_time = 39.3194
 
 # gradient_mask = np.abs(gradient) > 40000
 
-lt, lf_v, ht, hf_v = break_data(df, volt=True)
+lf_v, hf_v = break_data(df, volt=True)
 
-plt.plot(t, df['V'])
-plt.plot(lt, lf_v)
-plt.plot(ht, hf_v)
-plt.show()
-# break_hf(lf_v)
+# plt.plot(t, df['V'])
+# plt.plot(lf_v)
+# plt.plot(hf_v)
+# plt.show()
+# break_hf(hf_v)
 # lf_i, hf_i = break_data(df, volt=False)
 
 
