@@ -203,17 +203,11 @@ def increasing_sine_segments(data):
             durations.append([cumulative_offset-0.0003, cumulative_offset + 4/FREQUENCY_SWEEP_F1_1000[i]+0.0003])
         else: 
             cumulative_offset += 4/FREQUENCY_SWEEP_F1_1000[i] + mid_wait_duration - 0.0002
-
     
     segments = []
-    # access hf_v based on each set of durations
     for start, end in durations:
-        # if end > hf_i.index[-1]:
-        #     break
         segment = data[(data.index >= start) & (data.index <= end)]
         segments.append(segment)
-        # print(start, end)
-
     return segments
 
 df, fs = load_data(cell=79, temp='45C', soc=90)
