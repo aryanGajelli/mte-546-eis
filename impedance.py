@@ -148,7 +148,7 @@ def break_data(df, volt=True):
 
 
 
-    return lt, lpf(lf, 1/(lt[1]-lt[0]), 10), ht, lpf(hf, 1/(ht[1]-ht[0]), 10000),
+    return lt, lpf(lf, 1/(lt[1]-lt[0]), 10), ht, lpf(hf, 1/(ht[1]-ht[0]), 4000),
 
 
 def break_hf(data):
