@@ -1,0 +1,14 @@
+Start Voltage (V),Time to discharge (s),Discharged Ah,Discharge Current (A),,,,Test,"SOC at start of EIS (Estimated, please correct with EIS discharge Ah)",OCV before discharge,OCV,Discharged Ah before EIS,Discharge Current (A),EIS Discharge
+4.117,800.2,2,9,,,,,80%,4.03,3.865,0.55,3,0.0141
+3.532,953.8,0.795,3,,,,"Correct those three(80,65,45) for the correct SOC",65%,,3.7155,0.413,3,0.0141
+,,,,,,,,45%,,3.5533,0.55,3,0.0141
+,,,,,,,,20%,,3.133,0.681,3,0.0141
+,,,,total SOC Ah,2.795,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,
+,,,,,,,,1.513,,,,,
+,,,,,,,,0.0423,,,,,
+,,,,,,,,0.6807,,,,,
