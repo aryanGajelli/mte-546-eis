@@ -115,18 +115,58 @@ def compute_sine_wave_parameters(data, t, trend):
     return popt
 
 
-def exp_decay(x, A, s, t, y0):
-    return A*np.exp((x-s)*t) + y0
+
+def break_data(df, volt=True):
+    """
+    volt = False implies current data
+    """
+    V_PEAK_THRESHOLD = 0.004
+    I_PEAK_THRESHOLD = 0.1
+    threshold = V_PEAK_THRESHOLD if volt else I_PEAK_THRESHOLD
+
+    data = df['V' if volt else 'I']
+    gradient = np.gradient(data)
+    gradient = np.abs(gradient/np.max(gradient))
+    indexes = df.index[(gradient > threshold)]
+    splits = np.split(data, indexes)
+    count = 0
+    lf = None
+    hf = None
+    for split in splits:
+        if split.size > 1000:
+            if count == 1:
+                lf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
+            if count == 3:
+                hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
+            count += 1
+   
+    assert lf is not None
+    assert hf is not None
 
 
-df, fs = load_data(cell=79, temp='25C', soc=100)
+    return lf, hf
 
+    
+
+df, fs = load_data(cell=79, temp='45C', soc=80)
+t = df.index
 start_time = 9.32688 + 0.6
 end_time = 39.3194
 
-gradient = np.gradient(df['I'], 1/fs)
-gradient_mask = np.abs(gradient) > 40000
 
+# gradient_mask = np.abs(gradient) > 40000
+
+lf_v, hf_v = break_data(df, volt=True)
+lf_i, hf_i = break_data(df, volt=False)
+
+plt.plot(lf_v)
+plt.plot(hf_v)
+plt.plot(lf_i)
+plt.plot(hf_i)
+plt.grid()
+plt.show()
+
+exit()
 # get the time of the first peak in the gradient
 first_peak_time = df.index[gradient_mask][0]
 start_time = first_peak_time 
@@ -134,6 +174,8 @@ end_time = start_time + 29.8
 
 print("Start time:", start_time)
 print("End time:", end_time)
+
+
 
 extracted_voltage = df['V'][(df.index >= start_time) & (df.index <= end_time)]
 extracted_current = df['I'][(df.index >= start_time) & (df.index <= end_time)]
@@ -174,51 +216,3 @@ for i, (v_param, i_param) in enumerate(zip(v_params, i_params)):
     print(f"Impedance at {FREQ_MULTI_SINE[i]} Hz: {impedance:.6f}")
 
 
-
-# plt.plot(t, i)
-# plt.plot(t, v)
-# plt.xlabel('Time (s)')
-# plt.ylabel('Voltage (V)')
-# plt.title('Voltage over Time')
-# plt.grid()
-# plt.legend()
-# plt.show()
-
-# t = 9.3265 start
-# t = 39.3239 end
-# take the voltage and current data between these two points
-
-
-# compute_sine_wave_parameters(ac_voltage, extracted_voltage.index)
-
-# # fft_current = fft.fft(extracted_current)
-# # freqs = fft.fftfreq(len(extracted_current), 1/5000)
-# # plt.plot(freqs, np.abs(fft_current))
-
-# n = len(extracted_voltage)
-
-# # # fft
-# fft_current = fft.fft(extracted_current)[:n]
-# fft_voltage = fft.fft(ac_voltage)[:n]
-# freqs = fft.fftfreq(len(extracted_current), 1/fs)[:n]
-
-# mag_current = np.abs(fft_current)
-# mag_current[1:] = mag_current[1:] * 2 / n
-# mag_current[0] = mag_current[0] / n
-
-# mag_voltage = np.abs(fft_voltage)
-# mag_voltage[1:] = mag_voltage[1:] * 2 / n
-# mag_voltage[0] = mag_voltage[0] / n
-
-# # plt.plot(freqs, fft_voltage)
-# # plt.xlim(xmin=0, xmax=1.4)
-# # plt.ylim(ymin=0, ymax=1)
-# # plt.xlabel("Frequency (Hz)")
-# # plt.ylabel("Magnitude")
-# # plt.title("FFT of Current")
-# # plt.grid()
-# # plt.show()
-
-
-# # plt.plot(extracted_voltage.index, ac_voltage)
-# # plt.show()
