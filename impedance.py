@@ -21,7 +21,6 @@ F100_1000 = np.geomspace(100, 1000, 10)
 FREQUENCY_SWEEP_F1_1000 = np.concatenate((F1_10, F10_100, F100_1000))
 
 
-
 def lpf(data, sample_rate, cuttoff_freq, fc=None, btype='lowpass'):
     order = 2
     if fc == None:
@@ -147,7 +146,7 @@ def break_data(df, volt=True):
 
     assert lf is not None
     assert hf is not None
-    
+
     lt = lf.index
     ht = hf.index
 
@@ -155,90 +154,57 @@ def break_data(df, volt=True):
 
 
 def break_hf(data):
-    INIT_OFFSET = 1
+    INIT_OFFSET = 1 - 0.00025
     MIDDLE_OFFSET = 0.1
     t = data.index
     t0 = t[0]
 
-    freq = np.geomspace(1, 10, 10)
-    # l = lpf(data, 1/(t[1]-t[0]), 10)
-    g = np.gradient(data)
+    lmask = t - t0 < 16
+    lmask1 = t - t0 <= 20
+    l = lpf(data, 1/(t[1]-t[0]), 0.1)[lmask]
+    l10 = lpf(data, 1/(t[1]-t[0]), 0.5)[~lmask&lmask1]
+    l100 = lpf(data, 1/(t[1]-t[0]), 2)[~lmask1]
     
+    data = np.hstack((data[lmask] - l, data[~lmask&lmask1] - l10, data[~lmask1] - l100))
+
+
+    f1_10 = []
+    start = INIT_OFFSET
+    for f in np.geomspace(1, 10, 10):
+        end = start + 4/f
+        f1_10.append(data[(t - t0 >= start) & (t - t0 <= end)])
+        start = end + MIDDLE_OFFSET
+    start10 = start
+    f10_100 = []
+    MIDDLE_OFFSET -= 0.0001
+    start -= 0.00035
+    for f in np.geomspace(10, 100, 10):
+        end = start + 4/np.round(f, 6) + 0.00015
+        if f == 10:
+            end += 0.00033
+        f10_100.append(data[(t - t0 >= start) & (t - t0 <= end)])
+        start = end + MIDDLE_OFFSET - 0.00008
     
+    f100_1000 = []
+    for f in np.geomspace(100, 1000, 10):
+        end = start + 4/np.round(f, 6) + 0.00015
+        f100_1000.append(data[(t - t0 >= start) & (t - t0 <= end)])
+        start = end + MIDDLE_OFFSET - 0.00005
 
-    # splits = np.split(data, indexes)
-    # for split in splits:
-    #     # if 100 < split.size < 1000:
-    #         print(split)
-    #         # plt.plot(split)
-    #         # if count == 1:
-    #         #     lf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
-    #         # if count == 3:
-    #         #     hf = data[(df.index > split.index[0] + 0.0001) & (df.index < split.index[-1] - 0.0001)]
-    #         # count += 1
-    plt.plot(t, data)
-    plt.plot(t, g, label = 'g')
-    # start = INIT_OFFSET
-    # for f in freq:
-    #     end = start + 4/f
-    #     print(start, end)
-    #     plt.plot(data[(t - t0 >= start) & (t - t0 <= end)], label=f'{f:.3f}')
-    #     start = end + MIDDLE_OFFSET
-    
-    plt.legend()
-    plt.show()
 
-def increasing_sine_segments(data):
-    # Define wait durations
-    initial_wait_duration = 1  # seconds
-    mid_wait_duration = 0.1  # seconds
+    return f1_10, f10_100, f100_1000
 
-    durations = []
-    cumulative_offset = initial_wait_duration + data.index[0]
-    for i in range(len(FREQUENCY_SWEEP_F1_1000)):
-        durations.append([cumulative_offset, cumulative_offset + 4/FREQUENCY_SWEEP_F1_1000[i]])
-        if i < 25:
-            cumulative_offset += 4/FREQUENCY_SWEEP_F1_1000[i] + mid_wait_duration
-        elif i == 29:
-            durations.append([cumulative_offset-0.0003, cumulative_offset + 4/FREQUENCY_SWEEP_F1_1000[i]+0.0003])
-        else: 
-            cumulative_offset += 4/FREQUENCY_SWEEP_F1_1000[i] + mid_wait_duration - 0.0002
-    
-    segments = []
-    for start, end in durations:
-        segment = data[(data.index >= start) & (data.index <= end)]
-        segments.append(segment)
-    return segments
 
-df, fs = load_data(cell=79, temp='45C', soc=90)
+df, fs = load_data(cell=79, temp='35C', soc=0)
 t = df.index
 start_time = 9.32688 + 0.6
 end_time = 39.3194
 
 
-# gradient_mask = np.abs(gradient) > 40000
 
 lf_v, hf_v = break_data(df, volt=True)
-
-# plt.plot(t, df['V'])
-# plt.plot(lf_v)
-# plt.plot(hf_v)
-# plt.show()
-# break_hf(hf_v)
 lf_i, hf_i = break_data(df, volt=False)
-
-plt.plot(hf_i.index, hf_i.values, label='hf_i')
-plt.show()
-
-segments = increasing_sine_segments(hf_i)
-
-for segment in segments:
-    plt.plot(segment.index, segment.values)
-plt.xlabel("Time (s)")
-plt.ylabel("Current (A)")
-plt.title("Segments of hf_i")
-plt.grid()
-plt.show()
+f1_10, f10_100, f100_1000 = break_hf(hf_v)
 
 exit()
 # get the time of the first peak in the gradient
