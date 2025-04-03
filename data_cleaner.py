@@ -171,9 +171,9 @@ def break_hf(data):
     start = INIT_OFFSET
     for f in np.geomspace(1, 10, 10):
         end = start + 4/f
-        f1_10.append(data[(t - t0 >= start) & (t - t0 <= end)])
+        f1_10.append(pd.Series(data[(t - t0 >= start) & (t - t0 <= end)], index=t[(t - t0 >= start) & (t - t0 <= end)]))
         start = end + MIDDLE_OFFSET
-    start10 = start
+
     f10_100 = []
     MIDDLE_OFFSET -= 0.0001
     start -= 0.00035
@@ -181,13 +181,13 @@ def break_hf(data):
         end = start + 4/np.round(f, 6) + 0.00015
         if f == 10:
             end += 0.00033
-        f10_100.append(data[(t - t0 >= start) & (t - t0 <= end)])
+        f10_100.append(pd.Series(data[(t - t0 >= start) & (t - t0 <= end)], index=t[(t - t0 >= start) & (t - t0 <= end)]))
         start = end + MIDDLE_OFFSET - 0.00008
 
     f100_1000 = []
     for f in np.geomspace(100, 1000, 10):
         end = start + 4/np.round(f, 6) + 0.00015
-        f100_1000.append(data[(t - t0 >= start) & (t - t0 <= end)])
+        f100_1000.append(pd.Series(data[(t - t0 >= start) & (t - t0 <= end)], index=t[(t - t0 >= start) & (t - t0 <= end)]))
         start = end + MIDDLE_OFFSET - 0.00005
 
     return f1_10, f10_100, f100_1000
