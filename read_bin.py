@@ -71,7 +71,7 @@ def load_data(cell: int, temp: TEMP_RANGES, soc: SOC_RANGES, discharge_current: 
 
 if __name__ == "__main__":
     df, _ = load_data(79, '25C', 100)
-
+    df.to_csv('data/cell79/25C/100/all.csv')
     plt.plot(df.index, df['V'])
     plt.xlabel('Time (s)')
     # plt.ylabel('Current (A)')

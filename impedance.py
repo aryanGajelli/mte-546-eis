@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy import signal, optimize
-from scipy.fft import fft, fftfreq
+from scipy.fft import fft, fftfreq, fftshift, rfft, rfftfreq
 from scipy.interpolate import make_splrep
 import sys
 from pathlib import Path
@@ -101,16 +101,18 @@ def compute_sine_wave_parameters(data, t, trend):
     # reconstructed_waveform = multisine(t, *(np.array([0.106223, 0.103442, 0.104527, 0.113251, 0.105519])*1.07))
     # Plot the original and reconstructed waveforms
     # return reconstructed_waveform
-    plt.figure(figsize=(10, 6))
-    plt.plot(t, data + trend, label='Original Data', color='blue')
-    plt.plot(t, reconstructed_waveform + trend, label='Reconstructed Waveform', color='orange')
-    plt.plot(t, trend, label='DC trend', color='green')
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
-    plt.title('Original and Reconstructed Waveforms')
-    # plt.legend()
-    plt.grid()
-    plt.show()
+    # plt.figure(figsize=(10, 6))
+    # plt.plot(t, data + trend, label='Original Data', color='blue')
+    # plt.plot(t, reconstructed_waveform + trend, label='Reconstructed Waveform', color='orange')
+    # plt.plot(t, trend, label='DC trend', color='green')
+    # plt.xlabel('Time (s)')
+    # plt.ylabel('Amplitude')
+    # plt.title('Original and Reconstructed Waveforms')
+    # # plt.legend()
+    # plt.grid()
+    # plt.show()
+
+    return popt
 
 
 def exp_decay(x, A, s, t, y0):
@@ -121,6 +123,18 @@ df, fs = load_data(cell=79, temp='25C', soc=100)
 
 start_time = 9.32688 + 0.6
 end_time = 39.3194
+
+gradient = np.gradient(df['I'], 1/fs)
+gradient_mask = np.abs(gradient) > 40000
+
+# get the time of the first peak in the gradient
+first_peak_time = df.index[gradient_mask][0]
+start_time = first_peak_time 
+end_time = start_time + 29.8
+
+print("Start time:", start_time)
+print("End time:", end_time)
+
 extracted_voltage = df['V'][(df.index >= start_time) & (df.index <= end_time)]
 extracted_current = df['I'][(df.index >= start_time) & (df.index <= end_time)]
 # remove the DC offset
@@ -137,26 +151,30 @@ a_trend = lpf(extracted_current, fs, 0.04)
 ac_voltage = extracted_voltage - v_trend
 ac_current = extracted_current - a_trend
 
-N_required = int(fs/0.001)
-N_original = len(ac_current)
-if N_original < N_required:
-    pad_length = N_required - N_original
-    ac_current_padded = np.pad(ac_current.values, (0, pad_length), mode='constant', constant_values=0)
-    dt = 1/fs
-    t_padded = np.arange(N_required) * dt + t.min()
+v_params = compute_sine_wave_parameters(ac_voltage, t, v_trend)
+i_params = compute_sine_wave_parameters(ac_current, t, a_trend)
+
+print(f"Voltage params: {v_params}")
+print(f"Current params: {i_params}")
+
+#remove last item from v_params and i_params
+v_offset = v_params[-1]
+i_offset = i_params[-1]
+v_params = v_params[:-1]
+i_params = i_params[:-1]
+
+print(f"Voltage offset: {v_offset}")
+print(f"Current offset: {i_offset}")
+
+for i, (v_param, i_param) in enumerate(zip(v_params, i_params)):
+    v_freq = v_param * np.exp(1j * (PHI[i] + v_offset))
+    i_freq = i_param * np.exp(1j * (PHI[i]))
+    impedance = (v_freq / -i_freq)
+    impedance = impedance.conjugate()
+    print(f"Impedance at {FREQ_MULTI_SINE[i]} Hz: {impedance:.6f}")
 
 
-fft_current = fft(ac_current_padded)[:N_required//2]
-freqs = fftfreq(N_required, 1/fs)[:N_required//2]
-# for freq in freqs:
-#     print(freq)
 
-plt.plot(freqs, np.abs(fft_current))
-plt.xlim(xmin=0, xmax=1.4)
-plt.grid()
-plt.show()
-# v = compute_sine_wave_parameters(ac_voltage, t, v_trend)
-# i = compute_sine_wave_parameters(ac_current, t, a_trend)
 # plt.plot(t, i)
 # plt.plot(t, v)
 # plt.xlabel('Time (s)')
