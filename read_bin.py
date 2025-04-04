@@ -1,7 +1,7 @@
 
 from constants import *
 from pathlib import Path
-import array
+
 import struct
 from collections import namedtuple
 import numpy as np
@@ -9,7 +9,7 @@ from scipy import signal
 import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
-import time
+
 TYPE_DIGITAL = 0
 TYPE_ANALOG = 1
 expected_version = 0
@@ -42,12 +42,14 @@ def parse_analog(fpath: Path):
     return AnalogData(begin_time, sample_rate/q, downsample, len(samples), samples)
 
 
-def load_data(cell: int, temp: TEMP_RANGES, soc: SOC_RANGES, discharge_current: float = 1):
+def load_data(cell: int, temp: TEMP_RANGES, soc: SOC_RANGES, discharge_current: float = 1, test: bool = False):
     # load three sets of data from the analog bin files and store in single dataframe
-    data_dir_i = Path(f'data/cell{cell}/{temp}/{soc}/analog_5.bin')
-    data_dir_temp = Path(f'data/cell{cell}/{temp}/{soc}/analog_4.bin')
-    data_dir_v = Path(f'data/cell{cell}/{temp}/{soc}/analog_6.bin')
-    start = time.time()
+    d = 'test/' if test else ''
+
+    data_dir_i = Path(f'data/cell{cell}/{temp}/{d}{soc}/analog_5.bin')
+    data_dir_temp = Path(f'data/cell{cell}/{temp}/{d}{soc}/analog_4.bin')
+    data_dir_v = Path(f'data/cell{cell}/{temp}/{d}{soc}/analog_6.bin')
+
     data = [
         parse_analog(data_dir_i),
         parse_analog(data_dir_temp),
