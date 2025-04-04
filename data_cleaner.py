@@ -12,13 +12,7 @@ from pathlib import Path
 sys.path.append('../')
 
 
-FREQ_MULTI_SINE = np.geomspace(0.1, 1, 5)
-PHI = np.array([1.354738, 4.254050, 2.726734, 4.975810, 1.100473])
-AMP = np.array([0.106223, 0.103442, 0.104527, 0.113251, 0.105519])
-F1_10 = np.geomspace(1, 10, 10)
-F10_100 = np.geomspace(10, 100, 10)
-F100_1000 = np.geomspace(100, 1000, 10)
-FREQUENCY_SWEEP_F1_1000 = np.concatenate((F1_10, F10_100, F100_1000))
+
 
 
 def lpf(data, sample_rate, cuttoff_freq, fc=None, btype='lowpass'):
@@ -30,26 +24,7 @@ def lpf(data, sample_rate, cuttoff_freq, fc=None, btype='lowpass'):
     return filtered_data
 
 
-def get_v_offset(data_in_amperage, time, discharge_current):
-    start_t = None
-    ref_val = None
-    offset_values = []
-    for idx, t in enumerate(time):
-        if start_t is None:
-            start_t = t
-            ref_val = data_in_amperage[idx]
-            offset_values.append(data_in_amperage[idx])
-        elif (ref_val - 0.05 < data_in_amperage[idx] < ref_val + 0.05) and (discharge_current - 0.35 < data_in_amperage[idx] < discharge_current + 0.35):
-            offset_values.append(data_in_amperage[idx])
-        else:
-            if start_t is not None:
-                if t - start_t > 0.98 and t - start_t < 1.1:
-                    print(f"Start time: {start_t}, End time: {t}, Duration: {t - start_t:.2f} seconds")
-                    print(-(discharge_current - np.mean(offset_values)))
-                    return -(discharge_current - np.mean(offset_values))
-                start_t = None
-                offset_values = []
-    return 0
+
 
 
 def multisine(t, a1, a2, a3, a4, a5, p):
